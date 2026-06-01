@@ -1,0 +1,35 @@
+version: "3.3"
+
+services:
+
+  hellpot:
+    image: ghcr.io/yunginnanet/hellpot:latest
+    container_name: hellpot
+    ports:
+      - "80:8080"
+    volumes:
+      - ./hellpot-config.toml:/hellpot.toml:ro
+      - hellpot-logs:/var/log/hellpot
+    command: ["-c", "/hellpot.toml"]
+    restart: unless-stopped
+
+  reporter:
+    image: python:3.12-alpine
+    container_name: hellpot-reporter
+    volumes:
+      - ./reporter.py:/reporter.py:ro
+      - hellpot-logs:/logs:ro
+    environment:
+      - ABUSEIPDB_KEY=${ABUSEIPDB_KEY}
+      - HELLPOT_LOG=/logs/HellPot.log
+      - COOLDOWN_MINUTES=15
+      - ABUSEIPDB_CATEGORIES=14,21
+      - DRY_RUN=false
+    command: >
+      sh -c "pip install requests --quiet && python /reporter.py"
+    depends_on:
+      - hellpot
+    restart: unless-stopped
+
+volumes:
+  hellpot-logs:

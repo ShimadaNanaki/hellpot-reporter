@@ -1,0 +1,16 @@
+[http]
+bind_addr = "0.0.0.0"
+bind_port = "8080"
+
+catchall = true
+
+[logger]
+debug = false
+trace = false
+directory = "/var/log/hellpot/"
+use_date_filename = false
+nocolor = true
+
+[performance]
+max_workers = 64
+restrict_concurrency = true
