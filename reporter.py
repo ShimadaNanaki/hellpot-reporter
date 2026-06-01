@@ -64,7 +64,11 @@ def report_ip(ip: str, comment: str = "") -> bool:
     payload = {
         "ip": ip,
         "categories": CATEGORIES,
-        "comment": comment or f"HellPot HTTP honeypot: unsolicited connection from {ip}",
+        "comment": comment or (
+            f"HellPot HTTP honeypot: bot trap triggered. "
+            f"This host ({ip}) made an unsolicited HTTP request to a honeypot endpoint "
+            f"designed to stall and exhaust malicious crawlers with an infinite response."
+        ),
     }
     try:
         resp = requests.post(url, headers=headers, data=payload, timeout=10)
@@ -135,12 +139,21 @@ def main():
                 comment = ""
                 try:
                     obj = json.loads(line.strip())
+                    method   = obj.get("method", "")
                     path_val = obj.get("path", obj.get("uri", ""))
-                    ua = obj.get("user_agent", obj.get("ua", ""))
-                    if path_val:
-                        comment = f"HellPot HTTP honeypot: accessed {path_val}"
-                        if ua:
-                            comment += f" UA: {ua[:100]}"
+                    ua       = obj.get("user_agent", obj.get("ua", ""))
+                    parts = [
+                        "HellPot HTTP honeypot: bot trap triggered.",
+                        "This host made an unsolicited HTTP request to a honeypot endpoint"
+                        " designed to stall and exhaust malicious crawlers with an infinite response.",
+                    ]
+                    if method and path_val:
+                        parts.append(f"Request: {method} {path_val}")
+                    elif path_val:
+                        parts.append(f"Path: {path_val}")
+                    if ua:
+                        parts.append(f"User-Agent: {ua[:120]}")
+                    comment = " | ".join(parts)
                 except Exception:
                     pass
 
